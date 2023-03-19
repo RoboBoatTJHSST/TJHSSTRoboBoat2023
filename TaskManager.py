@@ -41,15 +41,11 @@ def task1(BuoyPair: dict): #returns point that boat needs to go to
         if BuoyPair[coord] == "Green": green[coord] = BuoyPair[coord]
     
     points = [] #for path of points
-    while red and green:
-        greenCoord, gcolor = nearestbuoy(green)
-        redCoord, rcolor = nearestbuoy(red)
-        del red[redCoord]
-        del green[greenCoord]
-        midpt = calcmidpoint({greenCoord: gcolor, redCoord: rcolor})
-        points.append(midpt)
-    return points
-
+    greenCoord, gcolor = nearestbuoy(green)
+    redCoord, rcolor = nearestbuoy(red)
+    midpt = calcmidpoint({greenCoord: gcolor, redCoord: rcolor})
+    return midpt
+    
 def task2(BuoyPair: dict): #returns point that boat needs to go to
     red = {}
     green = {}
@@ -90,7 +86,7 @@ def task3(Walls): #takes in coordinates for side of the dock and the front of th
     midpt = calcmidpoint(pair)
     #z coordinate is changed to account for the depth of the dock
     newmidpt  = (midpt[0], midpt[1], (midpt[2] + diff[2])/2)
-    return [newmidpt]
+    return newmidpt
 test = {(1,2,3):'', (5,2,3):'', (3, 2, 8):''}
 print(f"Task3 - Midpoint: {task3(test)}")
     
