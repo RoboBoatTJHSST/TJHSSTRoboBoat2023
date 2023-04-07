@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 import xyz_to_gps
 import pixhawkMessager
 import detect
+import PyLidarMapper.pymapper as limap
 #import lidarmapping
 def getTask(url):
     r = requests.get(url)
@@ -42,11 +43,16 @@ while True: #do everything in the while loop. Whenever groundstation sends us in
         detect.main(opt)
         buoys = {("centerCoord","radius" ): 'color'} #return format of YOLO
         while buoys:
+            limap.start()
             convertedbuoydata = {}
             for centerCoord, radius in buoys:
                 print()
-                pt =lidarmapping.convertCircleTo3D(centerCoord, radius)
+                
+                
+                pt =limap.find_sphere(x,y,z, radius)
+                
                 convertedbuoydata[pt] = buoys[(centerCoord, radius)]
+            limap.end()
             #using the buoy location and color data collected from CV and lidar, call task manager to output 3d points that
             #the boat needs to go to
             buoys = {(3,1,2): "Green", (5,6,1): "Red", (1,5,2): "Red", (2,6,4): "Black", (2,5,3): "Green", (5,2,6): "Yellow"}
