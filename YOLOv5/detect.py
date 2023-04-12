@@ -39,6 +39,7 @@ ROOT = FILE.parents[0]  # YOLOv5 root directory
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
+sys.path.append(str(FILE.parents[1]))
 
 from models.common import DetectMultiBackend
 from utils.dataloaders import IMG_FORMATS, VID_FORMATS, LoadImages, LoadScreenshots, LoadStreams
@@ -46,7 +47,7 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
                            increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh)
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
-
+from BaslerCalibration.BaslerLoader import LoadBasler
 
 @smart_inference_mode()
 def run(
@@ -58,7 +59,7 @@ def run(
         iou_thres=0.45,  # NMS IOU threshold
         max_det=1000,  # maximum detections per image
         device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
-        view_img=False,  # show results
+        view_img=True,  # show results
         save_txt=False,  # save results to *.txt
         save_conf=False,  # save confidences in --save-txt labels
         save_crop=False,  # save cropped prediction boxes
@@ -84,6 +85,7 @@ def run(
     is_url = source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
     webcam = source.isnumeric() or source.endswith('.streams') or (is_url and not is_file)
     screenshot = source.lower().startswith('screen')
+    basler = source.lower().startswith('basler')
     if is_url and is_file:
         source = check_file(source)  # download
 
@@ -104,18 +106,26 @@ def run(
     bs = 1  # batch_size
     if webcam:
         view_img = check_imshow(warn=True)
-        dataset = LoadStreams(source, img_size=imgsz, stride=stride, auto=pt, vid_stride=vid_stride) #<utils.dataloaders.LoadStreams object at 0x000001C434D99460>
+        dataset = LoadStreams(source, img_size=imgsz, stride=stride, auto=pt,
+                              vid_stride=vid_stride)  # <utils.dataloaders.LoadStreams object at 0x000001C434D99460>
         bs = len(dataset)
     elif screenshot:
         dataset = LoadScreenshots(source, img_size=imgsz, stride=stride, auto=pt)
+    elif basler:
+        view_img = check_imshow(warn=True)
+        dataset = LoadBasler()
+        bs = len(dataset)
     else:
         dataset = LoadImages(source, img_size=imgsz, stride=stride, auto=pt, vid_stride=vid_stride)
-    #vid_path, vid_writer = [None] * bs, [None] * bs
+    # vid_path, vid_writer = [None] * bs, [None] * bs
 
     # Run inference
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
     for path, im, im0s, vid_cap, s in dataset:
+        # Should be (1, 3, 480, 640)
+        print(im.shape)
+
         with dt[0]:
             im = torch.from_numpy(im).to(model.device)
             im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
@@ -125,7 +135,7 @@ def run(
 
         # Inference
         with dt[1]:
-            #visualize = increment_path(save_dir / Path(path).stem, mkdir=True) if visualize else False
+            # visualize = increment_path(save_dir / Path(path).stem, mkdir=True) if visualize else False
             pred = model(im, augment=augment, visualize=visualize)
 
         # NMS
@@ -151,7 +161,7 @@ def run(
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
-            #print(f'DET:   {det}')
+            # print(f'DET:   {det}')
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
@@ -165,13 +175,13 @@ def run(
                 for *xyxy, conf, cls in reversed(det):
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                        #print(f'xywh: {xywh}   xyxy: {xyxy}')
-                        #line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
+                        # print(f'xywh: {xywh}   xyxy: {xyxy}')
+                        # line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
                         # with open(f'{txt_path}.txt', 'a') as f:
                         #     f.write(('%g ' * len(line)).rstrip() % line + '\n')
-                    #print(f'xyxy: {xyxy}')
+                    # print(f'xyxy: {xyxy}')
                     xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh   
-                    #print(f'xywh: {xywh}')
+                    # print(f'xywh: {xywh}')
                     if save_img or save_crop or view_img:  # Add bbox to image
                         c = int(cls)  # integer class
                         label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
@@ -179,18 +189,21 @@ def run(
                     # if save_crop:
                     #     save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
 
-            # Stream results
-                    #print(f'LOCATION: {names}  {label}')
-              # Dictionary nameid: (wordname, confidence, center, radius)
-                    
+                    # Stream results
+                    # print(f'LOCATION: {names}  {label}')
+                    # Dictionary nameid: (wordname, confidence, center, radius)
+
                     if c not in bookDet:
-                        bookDet[c] = {(names[c], conf, (xywh[0]-xywh[2]/2, xywh[1]+xywh[3]/2), (xywh[2]+xywh[3])/2, tuple(xywh))}
-                    else:bookDet[c].add((names[c], conf, (xywh[0]-xywh[2]/2, xywh[1]+xywh[3]/2), (xywh[2]+xywh[3])/2, tuple(xywh)))
-            #names: {0:'whitebuoy...} dictionary of ind to name of label
+                        bookDet[c] = {(names[c], conf, (xywh[0] - xywh[2] / 2, xywh[1] + xywh[3] / 2),
+                                       (xywh[2] + xywh[3]) / 2, tuple(xywh))}
+                    else:
+                        bookDet[c].add((names[c], conf, (xywh[0] - xywh[2] / 2, xywh[1] + xywh[3] / 2),
+                                        (xywh[2] + xywh[3]) / 2, tuple(xywh)))
+            # names: {0:'whitebuoy...} dictionary of ind to name of label
             # label: the identified object confidence
-            #results = model(im0)
-            #l#abels, cord_thres = results.xyxyn[0][:, -1].numpy(), results.xyxyn[0][:, :-1].numpy()
-            #print(f'{labels}  {cord_thres}')
+            # results = model(im0)
+            # l#abels, cord_thres = results.xyxyn[0][:, -1].numpy(), results.xyxyn[0][:, :-1].numpy()
+            # print(f'{labels}  {cord_thres}')
             im0 = annotator.result()
             if view_img:
                 if platform.system() == 'Linux' and p not in windows:
@@ -222,7 +235,6 @@ def run(
         # Print time (inference-only)
         LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
         print(bookDet)
-        return(bookDet)
 
     # Print results
     t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
@@ -237,8 +249,8 @@ def run(
 def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'bestVary.pt', help='model path or triton URL')
-    #parser.add_argument('--source', type=str, default=ROOT / 'data/images', help='file/dir/URL/glob/screen/0(webcam)')
-    parser.add_argument('--source', type=str, default='0', help='file/dir/URL/glob/screen/0(webcam)')
+    # parser.add_argument('--source', type=str, default=ROOT / 'data/images', help='file/dir/URL/glob/screen/0(webcam)')
+    parser.add_argument('--source', type=str, default='basler', help='file/dir/URL/glob/screen/0(webcam)')
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='(optional) dataset.yaml path')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='confidence threshold')
@@ -276,10 +288,9 @@ def main(opt):
     buoys = {}
     for i in test:
         y = list(test[i])
-        buoys[(y[0][2][0], y[0][2][1], y[0][4][2], y[0][4][3])] = y[0][0] #(centerx, centery, width, height)
+        buoys[(y[0][2][0], y[0][2][1], y[0][4][2], y[0][4][3])] = y[0][0]  # (centerx, centery, width, height)
     print(buoys)
     return buoys
-    
 
 
 if __name__ == '__main__':
