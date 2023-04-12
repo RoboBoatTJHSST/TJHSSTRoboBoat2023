@@ -412,7 +412,6 @@ class LoadStreams:
             raise StopIteration
 
         im0 = self.imgs.copy()
-        print(f'Shape: {im0.shape}')
         if self.transforms:
             im = np.stack([self.transforms(x) for x in im0])  # transforms
         else:

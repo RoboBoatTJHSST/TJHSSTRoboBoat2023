@@ -21,7 +21,7 @@ class LoadBasler:
         # Start the grabbing of c_countOfImagesToGrab images.
         # The camera device is parameterized with a default configuration which
         # sets up free-running continuous acquisition.
-        self.camera.StartGrabbingMax(pylon.GrabStrategy_LatestImageOnly)
+        self.camera.StartGrabbingMax(10000, pylon.GrabStrategy_LatestImageOnly)
 
     def __iter__(self):
         return self
@@ -29,19 +29,21 @@ class LoadBasler:
     def __next__(self):
         # Wait for an image and then retrieve it. A timeout of 5000 ms is used.
         im = None
+        image = None
         grab_result = self.camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
         # Image grabbed successfully?
         if grab_result.GrabSucceeded():
             # Access the image data
             image = self.converter.Convert(grab_result)
-            im = np.ascontiguousarray(image.GetArray())
-            im = im[..., ::-1]
+            image = image.GetArray().copy()
+            im = np.asarray(image)
+            im = np.ascontiguousarray([im.transpose((2, 0, 1))])
         else:
             # grabResult.ErrorDescription does not work properly in python could throw UnicodeDecodeError
             print("Error: ", grab_result.ErrorCode)
         grab_result.Release()
 
-        return 'basler', im, im, None, ''
+        return 'basler', im, image, None, ''
 
     def __len__(self):
         return 10000000000000
