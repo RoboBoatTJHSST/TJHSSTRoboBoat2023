@@ -288,7 +288,7 @@ def main(opt):
     buoys = {}
     for i in test:
         y = list(test[i])
-        buoys[(y[0][2][0], y[0][2][1], y[0][4][2], y[0][4][3])] = y[0][0]  # (centerx, centery, width, height)
+        buoys[(y[0][2][0], y[0][2][1], y[0][3])] = y[0][0]
     print(buoys)
     return buoys
 
