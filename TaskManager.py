@@ -59,12 +59,20 @@ def task2(BuoyPair: dict): #returns point that boat needs to go to
     MandJCoord, mjcolor = nearestbuoy(MandJ)
     midpt = calcmidpoint({greenCoord: gcolor, redCoord: rcolor})
     #pairs the red and green buoy with the yellow or black buoy
-    greenAndMJ = calcmidpoint({greenCoord: gcolor, MandJCoord: mjcolor})
-    redAndMJ = calcmidpoint({redCoord: rcolor, MandJCoord: mjcolor})
-    if abs(midpt[0] - greenAndMJ[0]) < abs(midpt[0] - redAndMJ[0]):
-        return greenAndMJ
-    elif abs(midpt[0] - greenAndMJ[0]) > abs(midpt[0] - redAndMJ[0]):
-        return redAndMJ
+    if MandJCoord:
+        for mjcoord, mjcolor in MandJ:
+            if mjcolor == "Yellow":
+                jellyfish+=1
+            elif mjcolor == "Black":
+                manatees +=1
+        greenAndMJ = calcmidpoint({greenCoord: gcolor, MandJCoord: mjcolor})
+        redAndMJ = calcmidpoint({redCoord: rcolor, MandJCoord: mjcolor})
+        if abs(midpt[0] - greenAndMJ[0]) < abs(midpt[0] - redAndMJ[0]):
+            return greenAndMJ
+        elif abs(midpt[0] - greenAndMJ[0]) > abs(midpt[0] - redAndMJ[0]):
+            return redAndMJ
+    else:
+        return midpt
     #need to do counting
 
 buoyData = {(3,1,2): "Green", (5,6,1): "Red", (1,5,2): "Red", (2,6,4): "Black", (2,5,3): "Green", (5,2,6): "Yellow"}
