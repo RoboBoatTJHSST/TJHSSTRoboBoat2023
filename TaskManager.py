@@ -1,17 +1,5 @@
-#maybe it's a good idea to pass in what task the boat is doing
 manatees = 0 #black buoys
 jellyfish = 0 #yellow buoys
-
-# def countbuoys(BuoyData: dict): #counting black and yellow buoys
-#     manatee = 0
-#     jelly = 0
-#     for coord in BuoyData:
-#         if BuoyData[coord] == 'Black': manatee +=1
-#         if BuoyData[coord] == 'Yellow' : jelly +=1
-#     return manatee, jelly
-# m, j = countbuoys({(1,2,3): "Black", (3,2,3): "Yellow"})
-# manatees += m
-# jellyfish +=j
 
 def calcmidpoint(BuoyPair: dict) -> tuple: #takes a pair of buoys returing the midpoint
     keys = list(BuoyPair.keys())
@@ -47,6 +35,8 @@ def task1(BuoyPair: dict): #returns point that boat needs to go to
     return midpt
     
 def task2(BuoyPair: dict): #returns point that boat needs to go to
+    global manatees
+    global jellyfish
     red = {}
     green = {}
     MandJ = {}
@@ -60,10 +50,10 @@ def task2(BuoyPair: dict): #returns point that boat needs to go to
     midpt = calcmidpoint({greenCoord: gcolor, redCoord: rcolor})
     #pairs the red and green buoy with the yellow or black buoy
     if MandJCoord:
-        for mjcoord, mjcolor in MandJ:
-            if mjcolor == "Yellow":
+        for mjcoord in MandJ:
+            if MandJ[mjcoord] == "Yellow":
                 jellyfish+=1
-            elif mjcolor == "Black":
+            elif MandJ[mjcoord] == "Black":
                 manatees +=1
         greenAndMJ = calcmidpoint({greenCoord: gcolor, MandJCoord: mjcolor})
         redAndMJ = calcmidpoint({redCoord: rcolor, MandJCoord: mjcolor})
