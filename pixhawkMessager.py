@@ -2,8 +2,9 @@ import time
 from pymavlink import mavutil, mavwp
 import sys; args = sys.argv[1:]
 
-AUTO = 3
-GUIDED = 4
+MANUAL = 0
+AUTO = 10
+GUIDED = 15
 
 
 pixhawkConnection = None
@@ -26,6 +27,8 @@ def init() -> None:
 
 	# THE DEFINITIONS I MADE ON THE MODES LIKE GUIDED AND AUTO DOESN'T WORK!!!!!!!!!
 	# THEY ARE DIFFERENT FOR THIS PIXHAWK
+
+
 	# set_mode_autopilot(GUIDED)
 
 	# message = pixhawkConnection.mav.command_long_encode(
@@ -151,14 +154,7 @@ def main():
 	# while True:
 	# 	set_servo_pwm(1600)
 
-	for i in range(15):
-		set_servo_pwm(1500, i)
-		print(i)
-
-	for i in range(15):
-		set_servo_pwm(1900, i)
-		print(i)
-		time.sleep(0.5)
+	set_servo_pwm(1600)
 
 
 	# while True:
