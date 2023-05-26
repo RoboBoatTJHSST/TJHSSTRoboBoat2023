@@ -13,20 +13,18 @@ returnPoints = dict()
 if args: port = args[0]
 else: port = 5
 
+
 def init() -> None:
 	global pixhawkConnection
 
 	# Create the connection
 	pixhawkConnection = mavutil.mavlink_connection('COM6')
 
-	# Wait a heartbeat before sending commands
+	# Wait for a heartbeat before sending commands
 	print(pixhawkConnection.wait_heartbeat())
 
 	# Make sure the pixhawk is armed
 	pixhawkConnection.armed = True
-
-	# THE DEFINITIONS I MADE ON THE MODES LIKE GUIDED AND AUTO DOESN'T WORK!!!!!!!!!
-	# THEY ARE DIFFERENT FOR THIS PIXHAWK
 
 
 	# set_mode_autopilot(GUIDED)
@@ -49,21 +47,20 @@ def get_current_mode():
 	return pixhawkConnection.wait_heartbeat()
 
 
-def set_mode_autopilot(mode):
-	# method 1
-	message = pixhawkConnection.mav.command_long_encode(
-        pixhawkConnection.target_system, pixhawkConnection.target_component,
-        mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0,
-        mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, mode, # args
-		0, 0, 0, 0, 0)
-	pixhawkConnection.mav.send(message)
-	print(get_current_mode())
+# def set_mode_autopilot(mode):
+# 	message = pixhawkConnection.mav.command_long_encode(
+#         pixhawkConnection.target_system, pixhawkConnection.target_component, # stuff that you should always put at the start
+#         mavutil.mavlink.MAV_CMD_DO_SET_MODE, 0,		# name of the command
+#         mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, mode, 0, 0, 0, 0, 0)  # arguments
+	
+# 	pixhawkConnection.mav.send(message)
+# 	print(get_current_mode())
 
 
 def get_location() -> tuple:
 	gpsMessage = pixhawkConnection.mav.command_long_encode(1, 0,
 		mavutil.mavlink.MAV_CMD_REQUEST_MESSAGE, 0,
-		24, # args
+		33, # this cooresponds to the enum GLOBAL_POSITION_INT
 		0, 0, 0, 0, 0, 0)
 	pixhawkConnection.mav.send(gpsMessage)
 	try:
@@ -72,12 +69,14 @@ def get_location() -> tuple:
 		print("failed to get location")
 
 def set_servo_pwm(microseconds: int, pwmPort: int = 5) -> None:
+	# this is a shorthand for the whole sending a command thing
 	pixhawkConnection.set_servo(pwmPort, microseconds)
+
 	# pixhawkConnection.mav.command_long_send(
     # 	pixhawkConnection.target_system, pixhawkConnection.target_component,
     #     mavutil.mavlink.MAV_CMD_DO_SET_SERVO,
     #     0,            # first transmission of this command
-    #     pwmPort + 8, # servo instance, offset by 8 MAIN outputs
+    #     pwmPort + 8, # servo instance, offset by 8 MAIN outputs if you are connected to the pwm port on the right hand side
     #     microseconds, # PWM pulse-width
     #     0,0,0,0,0     # unused parameters
     # )
@@ -89,9 +88,9 @@ def create_waypoint(latitude: float, longitude: float):
 	latitude = int(latitude * 10**7); longitude = int(longitude * 10**7)
 
 	message = pixhawkConnection.mav.command_long_encode(
-        pixhawkConnection.target_system, pixhawkConnection.target_component,
-        mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, # args
-        0, 0.2, 0, 0, latitude, longitude, 0)
+        pixhawkConnection.target_system, pixhawkConnection.target_component, # random stuff to include
+        mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, # name of the mavlink command
+        0, 0.2, 0, 0, latitude, longitude, 0)	# arguments to the command
 	pixhawkConnection.mav.send(message)
 
 # for guided mode?
