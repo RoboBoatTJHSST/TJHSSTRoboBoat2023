@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Home Page</title>
+	<link rel="stylesheet" href="./css/basic.css">
+</head>
+
+<body>
+	<h1>Welcome to the TJHSST 2022-2023 RoboBoat Groundstation Site</h1>
+	<label for="task">Task:</label>
+	<select name="task" id="task">
+		<option value="1">Task 1</option>
+		<option value="2">Task 2</option>
+		<option value="3">Task 3</option>
+	</select>
+	<p id="stats">
+		Current Stats:<br>
+		Speed: 5 mph<br>
+		Direction: NE<br>
+		Task: 1
+	</p>
+	<script>
+		var tasknum = document.getElementById("task");
+		var stats = document.getElementById("stats");
+		tasknum.onchange = function () {
+			stats.innerHTML = "Current Stats:<br> Speed: 2450293475 mph<br> Direction: NE<br> Hello: World <br> Task: " + this.value;
+		}
+	</script>
+	<script>
+		// fetch('/hello')
+		// 	.then(function (response) {
+		// 		return response.text();
+		// 	}).then(function (text) {
+		// 		console.log('GET response text:');
+		// 		console.log(text); // Print the greeting as text
+		// 	});
+
+		// Send the same request
+		// fetch('/task')
+		// 	.then(function (response) {
+		// 		return response.json(); // But parse it as JSON this time
+		// 	})
+		// 	.then(function (json) {
+		// 		console.log('GET response as JSON:');
+		// 		console.log(json); // Here’s our JSON object
+		// 	})
+
+		// fetch('/hello', {
+
+		// 	// Declare what type of data we're sending
+		// 	headers: {
+		// 		'Content-Type': 'application/json'
+		// 	},
+
+		// 	// Specify the method
+		// 	method: 'POST',
+
+		// 	// A JSON payload
+		// 	body: JSON.stringify({
+		// 		"greeting": "Hello from the browser!"
+		// 	})
+		// }).then(function (response) { // At this point, Flask has printed our JSON
+		// 	return response.text();
+		// }).then(function (text) {
+
+		// 	console.log('POST response: ');
+
+		// 	// Should be 'OK' if everything was successful
+		// 	console.log(text);
+		// });
+		var tasknum = document.getElementById("task");
+		fetch('/task', {
+
+			// Declare what type of data we're sending
+			headers: {
+				'Content-Type': 'application/json'
+			},
+
+			// Specify the method
+			method: 'POST',
+
+			// A JSON payload
+			body: JSON.stringify({
+				"task": tasknum.value
+			})
+		}).then(function (response) { // At this point, Flask has printed our JSON
+			return response.text();
+		}).then(function (text) {
+
+			console.log('POST response: ');
+
+			// Should be 'OK' if everything was successful
+			console.log(text);
+		});
+	</script>
+	<button type="button">Arm</button>
+	<button type="button">Disarm</button><br><br>
+	<img src='../images/boatboat.jpg' alt='placeholder image' height=300px width=300px></img><br>
+</body>
+
+</html>
